@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "019c9443-b1c2-744a-8cd3-438462c192c0",
+  "main": "./src/worker/index.ts",
+  "compatibility_date": "2025-06-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "upload_source_maps": true,
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "019c9443-b1c2-744a-8cd3-438462c192c0",
+      "database_id": "019c9443-b1c2-744a-8cd3-438462c192c0"
+    }
+  ],
+	"r2_buckets": [
+	    {
+	      "binding": "R2_BUCKET",
+	      "bucket_name": "019c9443-b1c2-744a-8cd3-438462c192c0"
+	    }
+	  ],
+	"services": [
+	    {
+	      "binding": "EMAILS",
+	      "service": "emails-service",
+	      "entrypoint": "EmailService",
+	      "props": {
+	        "appId": "019c9443-b1c2-744a-8cd3-438462c192c0"
+	      }
+	    }
+	  ],
+	"env": {
+	  "development": {
+	    "vars": {
+	      "USERS_SERVICE_API_URL": "https://api.tapandtrust.com",
+	      "USERS_SERVICE_API_KEY": "test_key_019c9443b1c2744a8cd3438462c192c0"
+	    }
+	  }
+	}
+}

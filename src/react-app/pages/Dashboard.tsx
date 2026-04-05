@@ -21,7 +21,6 @@ import {
   Trophy,
   Music,
   ArrowRight,
-  Clock,
   Zap,
 } from 'lucide-react';
 
@@ -30,6 +29,7 @@ export default function DashboardPage() {
   const { user, isPending, logout } = useAuth();
   const [shoutoutOpen, setShoutoutOpen] = useState(false);
   const [shoutoutText, setShoutoutText] = useState('');
+  const [taggedConnections, setTaggedConnections] = useState<string[]>([]);
   const [profileData, setProfileData] = useState({
     displayName: '',
     bio: '',
@@ -43,14 +43,6 @@ export default function DashboardPage() {
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
-  }, []);
-
-  const formattedDate = useMemo(() => {
-    return new Date().toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-    });
   }, []);
 
   useEffect(() => {
@@ -81,6 +73,21 @@ export default function DashboardPage() {
     await logout();
     navigate('/');
   };
+
+  const toggleConnection = (connectionId: string) => {
+    setTaggedConnections(prev => 
+      prev.includes(connectionId) 
+        ? prev.filter(id => id !== connectionId)
+        : [...prev, connectionId]
+    );
+  };
+
+  const mockConnections = [
+    { id: '1', name: 'Alex', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex' },
+    { id: '2', name: 'Jordan', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan' },
+    { id: '3', name: 'Sam', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sam' },
+    { id: '4', name: 'Casey', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Casey' },
+  ];
 
   if (isPending || !user) {
     return (
@@ -207,10 +214,6 @@ export default function DashboardPage() {
           
           <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">{formattedDate}</span>
-              </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
                 {greeting},{' '}
                 <span className="bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500 bg-clip-text text-transparent">
@@ -292,7 +295,6 @@ export default function DashboardPage() {
                 </Avatar>
                 <div className="min-w-0">
                   <h3 className="font-bold text-xs sm:text-sm text-foreground/90 truncate">{userName}</h3>
-                  <p className="text-muted-foreground text-xs truncate">@{user.email.split('@')[0]}</p>
                 </div>
               </div>
 
@@ -425,6 +427,51 @@ export default function DashboardPage() {
               maxLength={280}
             />
             
+            {/* Tag Connections */}
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-xs font-semibold text-foreground mb-3">Tag Connections</p>
+              <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                {mockConnections.map(connection => (
+                  <button
+                    key={connection.id}
+                    onClick={() => toggleConnection(connection.id)}
+                    className={`p-2 rounded-lg transition-all text-sm font-medium flex items-center gap-2 ${
+                      taggedConnections.includes(connection.id)
+                        ? 'bg-pink-500/30 border border-pink-500/60 text-pink-200'
+                        : 'bg-muted/30 border border-border text-muted-foreground hover:border-border/80'
+                    }`}
+                  >
+                    <Avatar className="w-5 h-5">
+                      <AvatarImage src={connection.avatar} />
+                      <AvatarFallback>{connection.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs truncate">{connection.name}</span>
+                  </button>
+                ))}
+              </div>
+              {taggedConnections.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {taggedConnections.map(id => {
+                    const connection = mockConnections.find(c => c.id === id);
+                    return connection ? (
+                      <span key={id} className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                        @{connection.name}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleConnection(id);
+                          }}
+                          className="ml-1 hover:text-pink-200"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
+            
             <p className="text-xs text-muted-foreground text-right mt-1.5 sm:mt-2 mb-3 sm:mb-4">{shoutoutText.length}/280</p>
 
             <div className="flex gap-2">
@@ -438,8 +485,13 @@ export default function DashboardPage() {
               <Button
                 onClick={() => {
                   if (shoutoutText.trim()) {
-                    alert('Shoutout posted! Your friends will see it soon 🎉');
+                    const taggedNames = taggedConnections
+                      .map(id => mockConnections.find(c => c.id === id)?.name)
+                      .filter(Boolean)
+                      .join(', ');
+                    alert(`Shoutout posted to ${taggedNames || 'your friends'}! 🎉`);
                     setShoutoutText('');
+                    setTaggedConnections([]);
                     setShoutoutOpen(false);
                   }
                 }}

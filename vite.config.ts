@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig({
-  base: "/tap-and-trust/",
+  base: "/",
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 	  plugins: [
 	    react(),

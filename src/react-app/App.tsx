@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router";
 import { AuthProvider } from "@/react-app/contexts/AuthContext";
 import { ThemeProvider } from "@/react-app/contexts/ThemeContext";
+import { useScreenshotProtection } from "@/react-app/hooks/useScreenshotProtection";
 import HomePage from "@/react-app/pages/Home";
 import AuthCallbackPage from "@/react-app/pages/AuthCallback";
 import LoginPage from "@/react-app/pages/Login";
@@ -17,6 +18,8 @@ import LeaderboardPage from "@/react-app/pages/Leaderboard";
 import MusicPage from "@/react-app/pages/Music";
 
 export default function App() {
+  useScreenshotProtection();
+
   return (
     <ThemeProvider>
       <AuthProvider>

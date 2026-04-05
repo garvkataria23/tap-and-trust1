@@ -132,14 +132,16 @@ await saveUserProfile({
 ## 🔐 Database Credentials
 
 ```
-Connection: mongodb+srv://pranjallalwani46_db_user:sTnRNLJgLe5A2JVp@tap-trust.br6qjjs.mongodb.net/?appName=Tap-Trust
+Connection: mongodb+srv://YOUR_USERNAME:YOUR_PASSWORD@YOUR_CLUSTER.mongodb.net/?appName=Tap-Trust
 Database: tap-trust (auto-created)
 ```
 
+> ⚠️ Add your own MongoDB Atlas credentials. Do not commit real credentials to version control.
+
 ### **Manage Database:**
 1. Go to [MongoDB Atlas](https://account.mongodb.com/account)
-2. Login with same credentials
-3. Select "tap-trust" cluster
+2. Login with your credentials
+3. Select your cluster
 4. Go to Collections to see data
 
 ---

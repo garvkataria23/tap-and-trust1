@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Moon, Sun, X, Check } from 'lucide-react';
+import { Moon, Sun, Check } from 'lucide-react';
 import { useTheme } from '@/react-app/contexts/useTheme';
-import { Button } from '@/react-app/components/ui/button';
 
 export default function ThemeSelector() {
   const { theme, setTheme } = useTheme();
@@ -14,76 +13,60 @@ export default function ThemeSelector() {
 
   const handleThemeChange = (themeId: string) => {
     setTheme(themeId as 'dark' | 'light');
+    setIsOpen(false);
   };
 
   return (
     <>
       {/* Theme Toggle Button */}
       <button
-        onClick={() => setIsOpen(true)}
-        className="relative p-2 rounded-lg hover:bg-white/10 transition-colors group"
-        title="Theme settings"
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-colors"
+        title="Toggle theme"
       >
         {theme === 'dark' && <Moon className="w-5 h-5 text-blue-400" />}
         {theme === 'light' && <Sun className="w-5 h-5 text-amber-400" />}
       </button>
 
-      {/* Theme Modal */}
+      {/* Theme Dropdown Menu */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 rounded-2xl border border-white/10 shadow-2xl max-w-md w-full p-6 animate-in fade-in">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                Theme Settings
-              </h2>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X className="w-6 h-6 text-white/60" />
-              </button>
-            </div>
-
-            {/* Theme Selection */}
-            <div className="space-y-3 mb-6">
+        <>
+          <div 
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900/95 backdrop-blur border border-white/10 rounded-xl shadow-2xl p-3 z-50">
+            <div className="space-y-2">
               {themes.map((t) => {
                 const Icon = t.icon;
                 return (
                   <button
                     key={t.id}
                     onClick={() => handleThemeChange(t.id)}
-                    className={`w-full p-4 rounded-xl text-left transition-all border-2 flex items-start gap-3 ${
+                    className={`w-full p-3 rounded-lg text-left transition-all border flex items-center gap-3 ${
                       theme === t.id
-                        ? 'bg-gradient-to-r from-purple-600/30 to-pink-600/30 border-purple-500'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 cursor-pointer'
+                        ? 'bg-gradient-to-r from-purple-600/40 to-pink-600/40 border-purple-500/50'
+                        : 'bg-slate-800/30 border-slate-700 hover:bg-slate-800/60 hover:border-slate-600'
                     }`}
                   >
-                    <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${
-                      theme === t.id ? 'text-purple-400' : 'text-white/60'
+                    <Icon className={`w-5 h-5 flex-shrink-0 ${
+                      theme === t.id ? 'text-purple-300' : 'text-white/60'
                     }`} />
                     <div className="flex-1">
-                      <p className={`font-semibold ${theme === t.id ? 'text-white' : 'text-white/80'}`}>
+                      <p className={`text-sm font-semibold ${theme === t.id ? 'text-white' : 'text-white/80'}`}>
                         {t.name}
                       </p>
-                      <p className="text-xs text-white/50">{t.description}</p>
+                      <p className="text-xs text-white/40">{t.description}</p>
                     </div>
                     {theme === t.id && (
-                      <Check className="w-5 h-5 text-purple-400 shrink-0" />
+                      <Check className="w-5 h-5 text-purple-300 flex-shrink-0" />
                     )}
                   </button>
                 );
               })}
             </div>
-
-            {/* Action Button */}
-            <Button
-              onClick={() => setIsOpen(false)}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold h-10"
-            >
-              Done
-            </Button>
           </div>
-        </div>
+        </>
       )}
     </>
   );

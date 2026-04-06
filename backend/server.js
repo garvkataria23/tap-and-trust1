@@ -20,21 +20,71 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // MongoDB Connection with fallback to mock database
 let mongodbConnected = false;
-mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 10000,
-  socketTimeoutMS: 20000,
-  connectTimeoutMS: 10000,
-})
-  .then(() => {
-    mongodbConnected = true;
-    console.log('✅ MongoDB Connected');
+
+// Disable Mongoose command buffering to prevent 10s timeouts
+mongoose.set('bufferCommands', false);
+
+// If no MongoDB URI, use mock DB immediately
+if (!process.env.MONGODB_URI) {
+  console.log('📦 No MongoDB URI found. Using Mock Database (In-Memory)...');
+  useMockDB = true;
+  await mockDB.connectMockDatabase();
+} else {
+  // Try MongoDB with aggressive timeouts
+  mongoose.connect(process.env.MONGODB_URI, {
+    serverSelectionTimeoutMS: 3000,
+    socketTimeoutMS: 3000,
+    connectTimeoutMS: 3000,
+    family: 4,
   })
-  .catch(async (err) => {
-    console.warn('⚠️  MongoDB Connection Failed:', err.message);
-    console.log('📦 Switching to Mock Database (In-Memory)...');
-    useMockDB = true;
-    await mockDB.connectMockDatabase();
-  });
+    .then(() => {
+      mongodbConnected = true;
+      console.log('✅ MongoDB Connected');
+    })
+    .catch(async (err) => {
+      console.warn('⚠️  MongoDB Connection Failed (timeout:', err.message, ')');
+      console.log('📦 Switching to Mock Database (In-Memory)...');
+      useMockDB = true;
+      // Disconnect mongoose to prevent buffering
+      try {
+        await mongoose.disconnect();
+      } catch (e) {
+        // ignore
+      }
+      await mockDB.connectMockDatabase();
+    });
+}
+
+// ==================== DATABASE OPERATIONS WRAPPER ====================
+// These wrappers ensure queries don't buffer when MongoDB is unavailable
+
+async function findUser(query) {
+  if (useMockDB) {
+    return mockDB.findOne('users', query);
+  }
+  return User.findOne(query);
+}
+
+async function findUserById(id) {
+  if (useMockDB) {
+    return mockDB.findOne('users', { _id: id });
+  }
+  return User.findById(id);
+}
+
+async function createUser(data) {
+  if (useMockDB) {
+    return mockDB.create('users', data);
+  }
+  return User.create(data);
+}
+
+async function updateUser(query, update) {
+  if (useMockDB) {
+    return mockDB.findOneAndUpdate('users', query, update);
+  }
+  return User.findOneAndUpdate(query, update, { new: true });
+}
 
 // ==================== ROOT ROUTE ====================
 
@@ -48,6 +98,127 @@ app.get('/', (req, res) => {
     database: useMockDB ? '📦 Mock (In-Memory)' : '🗄️  MongoDB Atlas',
     health: '/api/health'
   });
+});
+
+// ==================== AUTHENTICATION ROUTES ====================
+
+// Generate simple token (not cryptographically secure - for demo only)
+function generateToken(userId) {
+  return `token_${userId}_${Date.now()}`;
+}
+
+// Auth middleware
+function authenticateToken(req, res, next) {
+  const token = req.headers['authorization']?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ success: false, error: 'No token provided' });
+  }
+  req.token = token;
+  next();
+}
+
+// Register
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, name, password } = req.body;
+    
+    if (!email || !name || !password) {
+      return res.status(400).json({ success: false, error: 'Email, name, and password are required' });
+    }
+
+    // Check if user exists
+    let user = await findUser({ email });
+    if (user) {
+      return res.status(400).json({ success: false, error: 'User already exists' });
+    }
+
+    // Create new user
+    user = await createUser({
+      email,
+      name,
+      picture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name)}`,
+      password // In production, this should be hashed
+    });
+
+    const token = generateToken(user._id);
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
+      }
+    });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Email and password are required' });
+    }
+
+    // Find user
+    const user = await findUser({ email });
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    }
+
+    // For demo, just check if password exists (in production use bcrypt)
+    if (user.password !== password) {
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    }
+
+    const token = generateToken(user._id);
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
+      }
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Get current user
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    // Extract user ID from token
+    const tokenParts = req.token.split('_');
+    const userId = tokenParts[1];
+
+    const user = await findUserById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
+      }
+    });
+  } catch (err) {
+    console.error('Get user error:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ==================== USER ROUTES ====================

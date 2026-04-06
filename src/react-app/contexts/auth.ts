@@ -10,7 +10,9 @@ export interface User {
 export interface AuthContextType {
   user: User | null;
   isPending: boolean;
-  login: (email: string, name: string) => void;
+  token: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, name: string, password: string) => Promise<void>;
   logout: () => void;
 }
 

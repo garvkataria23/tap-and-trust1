@@ -10,12 +10,14 @@ type AuthMode = 'signup' | 'login';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { user, login, isPending } = useAuth();
-  const [mode, setMode] = useState<AuthMode>('signup');
+  const { user, login, register, isPending } = useAuth();
+  const [mode, setMode] = useState<AuthMode>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
     if (user && !isPending) {
@@ -28,25 +30,48 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
     
-    if (!name || !password) {
-      setError('Please fill in all fields');
-      setIsLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      // Generate email from name if not provided
-      const generatedEmail = `${name.toLowerCase().replace(/\s+/g, '.')}@tap-trust.local`;
-      login(generatedEmail, name);
-      navigate('/dashboard');
+      if (mode === 'signup') {
+        // Validation for signup
+        if (!email || !name || !password || !confirmPassword) {
+          setError('Please fill in all fields');
+          setIsLoading(false);
+          return;
+        }
+
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters');
+          setIsLoading(false);
+          return;
+        }
+
+        if (password !== confirmPassword) {
+          setError('Passwords do not match');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!email.includes('@')) {
+          setError('Please enter a valid email');
+          setIsLoading(false);
+          return;
+        }
+
+        await register(email, name, password);
+      } else {
+        // Login validation
+        if (!email || !password) {
+          setError('Please fill in all fields');
+          setIsLoading(false);
+          return;
+        }
+
+        await login(email, password);
+      }
+
+      // Navigate happens via useEffect watching user state
     } catch (err) {
-      setError('Authentication failed. Please try again.');
+      setError(err instanceof Error ? err.message : 'Authentication failed');
       setIsLoading(false);
     }
   };
@@ -166,33 +191,69 @@ export default function LoginPage() {
 
             {/* Form */}
             <form onSubmit={handleAuth} className="space-y-4">
+              {/* Email Field */}
               <div>
                 <label className="block text-sm font-semibold text-white mb-2.5">
-                  {mode === 'signup' ? 'Full Name' : 'Name'}
+                  Email
                 </label>
                 <Input
-                  type="text"
-                  placeholder={mode === 'signup' ? 'John Doe' : 'Your Name'}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
                   className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50 transition-all"
                 />
               </div>
 
+              {/* Name Field (only for signup) */}
+              {mode === 'signup' && (
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2.5">
+                    Full Name
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="John Doe"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={isLoading}
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50 transition-all"
+                  />
+                </div>
+              )}
+
+              {/* Password Field */}
               <div>
                 <label className="block text-sm font-semibold text-white mb-2.5">
                   Password
                 </label>
                 <Input
                   type="password"
-                  placeholder="At least 6 characters"
+                  placeholder={mode === 'signup' ? 'At least 6 characters' : 'Enter password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                   className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50 transition-all"
                 />
               </div>
+
+              {/* Confirm Password (only for signup) */}
+              {mode === 'signup' && (
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2.5">
+                    Confirm Password
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="Confirm password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={isLoading}
+                    className="w-full px-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder:text-white/40 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/20 disabled:opacity-50 transition-all"
+                  />
+                </div>
+              )}
 
               <Button
                 type="submit"

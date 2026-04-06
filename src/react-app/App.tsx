@@ -31,8 +31,10 @@ export default function App() {
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/friends" element={<FriendsPage />} />
             <Route path="/friend-requests" element={<FriendRequestsPage />} />
+            <Route path="/chat" element={<ChatPage />} />
             <Route path="/chat/:friendId" element={<ChatPage />} />
             <Route path="/scanner" element={<ScannerPage />} />
             <Route path="/discover" element={<DiscoverPage />} />

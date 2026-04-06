@@ -53,9 +53,12 @@ export default function ChatPage() {
 
   useEffect(() => {
     fetchUserAndFriend();
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 3000); // Poll for new messages
-    return () => clearInterval(interval);
+    if (friendId) {
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 3000);
+      return () => clearInterval(interval);
+    }
+    setLoading(false);
   }, [friendId]);
 
   useEffect(() => {
@@ -85,6 +88,7 @@ export default function ChatPage() {
   };
 
   const fetchMessages = async () => {
+    if (!friendId) return;
     try {
       const res = await fetch(`/api/messages/${friendId}`);
       if (res.ok) {

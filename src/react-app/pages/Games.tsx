@@ -1,14 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Loader2, Trophy, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, Trophy, Zap, Users } from 'lucide-react';
 import { Button } from '@/react-app/components/ui/button';
 import { useAuth } from '@/react-app/contexts/useAuth';
+
+// Mock friend data for game opponent
+const mockFriends = [
+  { id: '1', name: 'Alex Chen', avatar: 'https://i.pravatar.cc/150?img=33' },
+  { id: '2', name: 'Sarah Johnson', avatar: 'https://i.pravatar.cc/150?img=47' },
+  { id: '3', name: 'Mike Davis', avatar: 'https://i.pravatar.cc/150?img=12' },
+];
 
 export default function GamesPage() {
   const navigate = useNavigate();
   const { friendId } = useParams();
   const { user, isPending } = useAuth();
   const [currentGame, setCurrentGame] = useState<'rockpaperscissors' | 'trivia' | null>(null);
+  
+  // Get opponent from friendId or show friend selection
+  const opponent = friendId ? mockFriends.find(f => f.id === friendId) || mockFriends[0] : null;
 
   useEffect(() => {
     if (!isPending && !user) {
@@ -63,6 +73,61 @@ export default function GamesPage() {
     );
   }
 
+  if (!opponent) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-3xl"></div>
+        </div>
+
+        <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-lg border-b border-white/10">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => navigate('/chat/games' || '/dashboard')}
+              className="hover:bg-white/10 text-white"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <span className="text-lg font-bold text-white">Select Opponent</span>
+            <div className="w-10" />
+          </div>
+        </header>
+
+        <main className="relative z-10 max-w-4xl mx-auto px-6 py-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-2">Choose Your Opponent</h2>
+            <p className="text-white/60">Select a friend to challenge to a game</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {mockFriends.map((friend) => (
+              <button
+                key={friend.id}
+                onClick={() => navigate(`/games/${friend.id}`)}
+                className="group relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur rounded-2xl p-6 border border-white/20 hover:border-cyan-400/50 transition-all transform hover:scale-105 text-left space-y-4"
+              >
+                <div className="flex items-center gap-4">
+                  <img src={friend.avatar} alt={friend.name} className="w-16 h-16 rounded-full" />
+                  <div>
+                    <h3 className="text-xl font-bold text-white">{friend.name}</h3>
+                    <p className="text-sm text-white/60">Ready to play</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-cyan-400 pt-2 font-semibold">
+                  <span>Challenge</span>
+                  <Zap className="w-4 h-4" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (!currentGame) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950">
@@ -78,7 +143,7 @@ export default function GamesPage() {
             <Button 
               variant="ghost" 
               size="icon"
-              onClick={() => navigate(`/chat/${friendId}`)}
+              onClick={() => navigate(`/chat/${friendId}` || '/dashboard')}
               className="hover:bg-white/10 text-white"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -87,7 +152,10 @@ export default function GamesPage() {
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-white" />
               </div>
-              <span className="text-lg font-bold text-white">Play Games</span>
+              <div>
+                <span className="text-lg font-bold text-white">Play vs {opponent?.name}</span>
+                <p className="text-xs text-white/60">Multiplayer Games</p>
+              </div>
             </div>
             <div className="w-10" />
           </div>
@@ -106,7 +174,8 @@ export default function GamesPage() {
                 <h3 className="text-xl font-bold text-white">{game.name}</h3>
                 <p className="text-sm text-white/60">{game.description}</p>
                 <div className="flex items-center gap-2 text-cyan-400 pt-2 font-semibold">
-                  <span>Play Now</span>
+                  <Users className="w-4 h-4" />
+                  <span>Play with Friend</span>
                   <Zap className="w-4 h-4" />
                 </div>
               </button>
@@ -116,24 +185,24 @@ export default function GamesPage() {
           {/* Info Card */}
           <div className="bg-gradient-to-br from-amber-500/20 via-transparent to-orange-500/20 backdrop-blur rounded-2xl p-6 border border-amber-400/30 space-y-4">
             <h3 className="font-bold text-white text-lg flex items-center gap-2">
-              🎮 Game Features
+              🎮 Multiplayer Features
             </h3>
             <ul className="space-y-2 text-sm text-white/70">
               <li className="flex items-start gap-2">
                 <span className="text-amber-400 mt-1">✓</span>
-                <span>Play against your friends in real-time</span>
+                <span>Play real-time against {opponent?.name}</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-amber-400 mt-1">✓</span>
-                <span>Multiple game types to keep things fun</span>
+                <span>Fair turn-based gameplay</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-amber-400 mt-1">✓</span>
-                <span>Earn bragging rights and keep score</span>
+                <span>Track wins and performance</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-amber-400 mt-1">✓</span>
-                <span>Great way to break the ice and get closer</span>
+                <span>Build your friendship through games</span>
               </li>
             </ul>
           </div>
@@ -143,69 +212,63 @@ export default function GamesPage() {
   }
 
   if (currentGame === 'rockpaperscissors') {
-    return <RockPaperScissorsGame onBack={() => setCurrentGame(null)} />;
+    return <RockPaperScissorsGame opponentName={opponent?.name || 'Opponent'} onBack={() => setCurrentGame(null)} />;
   }
 
   if (currentGame === 'trivia') {
-    return <TriviaGame onBack={() => setCurrentGame(null)} />;
-  }
-
-  if (currentGame === 'tictactoe') {
-    return <TicTacToeGame onBack={() => setCurrentGame(null)} />;
-  }
-
-  if (currentGame === 'wordguess') {
-    return <WordGuessGame onBack={() => setCurrentGame(null)} />;
-  }
-
-  if (currentGame === 'numberguess') {
-    return <NumberGuessGame onBack={() => setCurrentGame(null)} />;
-  }
-
-  if (currentGame === 'memory') {
-    return <MemoryGame onBack={() => setCurrentGame(null)} />;
+    return <TriviaGame opponentName={opponent?.name || 'Opponent'} onBack={() => setCurrentGame(null)} />;
   }
 
   return null;
 }
 
-function RockPaperScissorsGame({ onBack }: { onBack: () => void }) {
+function RockPaperScissorsGame({ opponentName, onBack }: { opponentName: string; onBack: () => void }) {
   const [userChoice, setUserChoice] = useState<'rock' | 'paper' | 'scissors' | null>(null);
+  const [opponentChoice, setOpponentChoice] = useState<'rock' | 'paper' | 'scissors' | null>(null);
   const [result, setResult] = useState<string>('');
   const [scores, setScores] = useState({ user: 0, opponent: 0 });
   const [round, setRound] = useState(1);
+  const [isOpponentTurn, setIsOpponentTurn] = useState(false);
 
   const choices = ['rock', 'paper', 'scissors'] as const;
 
   const play = (choice: 'rock' | 'paper' | 'scissors') => {
     setUserChoice(choice);
-    const randomChoice = choices[Math.floor(Math.random() * choices.length)];
-
-    if (choice === randomChoice) {
-      setResult('It\'s a tie! 🤝');
-    } else if (
-      (choice === 'rock' && randomChoice === 'scissors') ||
-      (choice === 'paper' && randomChoice === 'rock') ||
-      (choice === 'scissors' && randomChoice === 'paper')
-    ) {
-      setResult(`You won this round! 🎉`);
-      setScores(s => ({ ...s, user: s.user + 1 }));
-    } else {
-      setResult(`Opponent won this round! 😅`);
-      setScores(s => ({ ...s, opponent: s.opponent + 1 }));
-    }
-
+    setIsOpponentTurn(true);
+    
+    // Simulate opponent thinking and playing
     setTimeout(() => {
-      if (round < 3) {
-        setRound(r => r + 1);
-        setUserChoice(null);
-        setResult('');
+      const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+      setOpponentChoice(computerChoice);
+
+      if (choice === computerChoice) {
+        setResult('It\'s a tie! 🤝');
+      } else if (
+        (choice === 'rock' && computerChoice === 'scissors') ||
+        (choice === 'paper' && computerChoice === 'rock') ||
+        (choice === 'scissors' && computerChoice === 'paper')
+      ) {
+        setResult(`You won this round! 🎉`);
+        setScores(s => ({ ...s, user: s.user + 1 }));
+      } else {
+        setResult(`${opponentName} won this round! 😅`);
+        setScores(s => ({ ...s, opponent: s.opponent + 1 }));
       }
-    }, 2000);
+
+      setTimeout(() => {
+        if (round < 3) {
+          setRound(r => r + 1);
+          setUserChoice(null);
+          setOpponentChoice(null);
+          setResult('');
+          setIsOpponentTurn(false);
+        }
+      }, 2500);
+    }, 1500);
   };
 
   const gameOver = round > 3;
-  const winner = scores.user > scores.opponent ? 'You won!' : scores.opponent > scores.user ? 'Opponent won!' : 'It\'s a tie!';
+  const winner = scores.user > scores.opponent ? 'You won the match!' : scores.opponent > scores.user ? `${opponentName} won the match!` : 'It\'s a tie!';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-950 flex items-center justify-center px-6">
@@ -215,12 +278,12 @@ function RockPaperScissorsGame({ onBack }: { onBack: () => void }) {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 max-w-md w-full space-y-6">
+      <div className="relative z-10 max-w-3xl w-full space-y-6">
         <div className="text-center space-y-2 mb-8">
           <h2 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
             <span>🪨 Rock Paper Scissors</span>
           </h2>
-          {!gameOver && <p className="text-white/60">Round {round} of 3</p>}
+          {!gameOver && <p className="text-white/60">Round {round} of 3 - vs {opponentName}</p>}
         </div>
 
         {!gameOver ? (
@@ -232,10 +295,24 @@ function RockPaperScissorsGame({ onBack }: { onBack: () => void }) {
                 <p className="text-3xl font-bold text-blue-400">{scores.user}</p>
               </div>
               <div className="bg-gradient-to-br from-purple-500/20 to-purple-500/10 backdrop-blur rounded-2xl p-4 text-center border border-purple-400/30">
-                <p className="text-sm text-white/60 mb-1">Opponent</p>
+                <p className="text-sm text-white/60 mb-1">{opponentName}</p>
                 <p className="text-3xl font-bold text-purple-400">{scores.opponent}</p>
               </div>
             </div>
+
+            {/* Choices Display */}
+            {(userChoice || opponentChoice) && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gradient-to-br from-blue-500/20 to-blue-500/10 backdrop-blur rounded-2xl p-6 text-center border border-blue-400/30">
+                  <p className="text-sm text-white/60 mb-2">Your Choice</p>
+                  <p className="text-5xl">{userChoice === 'rock' ? '🪨' : userChoice === 'paper' ? '📄' : '✂️'}</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500/20 to-purple-500/10 backdrop-blur rounded-2xl p-6 text-center border border-purple-400/30">
+                  <p className="text-sm text-white/60 mb-2">{opponentName}'s Choice</p>
+                  <p className="text-5xl">{!opponentChoice ? (isOpponentTurn ? '🤔' : '?') : opponentChoice === 'rock' ? '🪨' : opponentChoice === 'paper' ? '📄' : '✂️'}</p>
+                </div>
+              </div>
+            )}
 
             {result && (
               <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/10 backdrop-blur rounded-2xl p-4 text-center border border-cyan-400/30">
@@ -243,7 +320,7 @@ function RockPaperScissorsGame({ onBack }: { onBack: () => void }) {
               </div>
             )}
 
-            {!result && (
+            {!result && !isOpponentTurn && (
               <div className="text-center">
                 <p className="text-white/60 mb-4 font-semibold">Make your choice:</p>
                 <div className="grid grid-cols-3 gap-3">
@@ -251,15 +328,27 @@ function RockPaperScissorsGame({ onBack }: { onBack: () => void }) {
                     <button
                       key={choice}
                       onClick={() => play(choice)}
+                      disabled={isOpponentTurn}
                       className={`py-8 rounded-2xl font-bold text-2xl transition-all ${
                         userChoice === choice
                           ? 'bg-gradient-to-br from-blue-600 to-cyan-600 text-white scale-110'
-                          : 'bg-gradient-to-br from-white/10 to-white/5 border border-white/20 hover:border-cyan-400/50 text-white'
+                          : 'bg-gradient-to-br from-white/10 to-white/5 border border-white/20 hover:border-cyan-400/50 text-white disabled:opacity-50'
                       }`}
                     >
                       {choice === 'rock' ? '🪨' : choice === 'paper' ? '📄' : '✂️'}
                     </button>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {isOpponentTurn && !result && (
+              <div className="text-center">
+                <p className="text-white/60 mb-4 font-semibold">Waiting for {opponentName}...</p>
+                <div className="flex justify-center gap-2">
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-bounce"></div>
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-3 h-3 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             )}
@@ -281,10 +370,11 @@ function RockPaperScissorsGame({ onBack }: { onBack: () => void }) {
   );
 }
 
-function TriviaGame({ onBack }: { onBack: () => void }) {
+function TriviaGame({ opponentName, onBack }: { opponentName: string; onBack: () => void }) {
   const [currentQ, setCurrentQ] = useState(0);
   const [scores, setScores] = useState({ user: 0, opponent: 0 });
   const [selected, setSelected] = useState<number | null>(null);
+  const [currentPlayer, setCurrentPlayer] = useState<'user' | 'opponent'>('user');
 
   const questions = [
     {
@@ -302,6 +392,21 @@ function TriviaGame({ onBack }: { onBack: () => void }) {
       options: ['Michelangelo', 'Leonardo da Vinci', 'Raphael', 'Donatello'],
       correct: 1,
     },
+    {
+      q: 'What is the smallest prime number?',
+      options: ['0', '1', '2', '3'],
+      correct: 2,
+    },
+    {
+      q: 'Which country has the most populated city?',
+      options: ['USA', 'India', 'China', 'Japan'],
+      correct: 2,
+    },
+    {
+      q: 'What year did World War II end?',
+      options: ['1943', '1944', '1945', '1946'],
+      correct: 2,
+    },
   ];
 
   const question = questions[currentQ];
@@ -309,15 +414,28 @@ function TriviaGame({ onBack }: { onBack: () => void }) {
 
   const handleAnswer = (idx: number) => {
     setSelected(idx);
-    if (idx === question.correct) {
-      setScores(s => ({ ...s, user: s.user + 1 }));
+    
+    if (currentPlayer === 'user') {
+      if (idx === question.correct) {
+        setScores(s => ({ ...s, user: s.user + 1 }));
+      }
     } else {
-      setScores(s => ({ ...s, opponent: s.opponent + 1 }));
+      // Opponent's turn
+      const opponentCorrect = Math.random() > 0.4; // 60% accuracy for opponent
+      if (opponentCorrect) {
+        setScores(s => ({ ...s, opponent: s.opponent + 1 }));
+      }
     }
 
     setTimeout(() => {
-      setCurrentQ(c => c + 1);
-      setSelected(null);
+      if (currentPlayer === 'user') {
+        setCurrentPlayer('opponent');
+        setSelected(null);
+      } else {
+        setCurrentQ(c => c + 1);
+        setCurrentPlayer('user');
+        setSelected(null);
+      }
     }, 1500);
   };
 
@@ -334,7 +452,11 @@ function TriviaGame({ onBack }: { onBack: () => void }) {
           <h2 className="text-3xl font-bold text-white flex items-center justify-center gap-2">
             🧠 Quick Trivia
           </h2>
-          {!gameOver && <p className="text-white/60">Question {currentQ + 1} of {questions.length}</p>}
+          {!gameOver && (
+            <p className="text-white/60">
+              Question {currentQ + 1} of {questions.length} - {currentPlayer === 'user' ? 'Your turn' : `${opponentName}'s turn`}
+            </p>
+          )}
         </div>
 
         {!gameOver ? (
@@ -346,7 +468,7 @@ function TriviaGame({ onBack }: { onBack: () => void }) {
                 <p className="text-3xl font-bold text-pink-400">{scores.user}</p>
               </div>
               <div className="bg-gradient-to-br from-purple-500/20 to-purple-500/10 backdrop-blur rounded-2xl p-4 text-center border border-purple-400/30">
-                <p className="text-sm text-white/60 mb-1">Opponent</p>
+                <p className="text-sm text-white/60 mb-1">{opponentName}</p>
                 <p className="text-3xl font-bold text-purple-400">{scores.opponent}</p>
               </div>
             </div>
@@ -381,7 +503,7 @@ function TriviaGame({ onBack }: { onBack: () => void }) {
             <div className="bg-gradient-to-br from-pink-500/20 to-purple-500/10 backdrop-blur rounded-2xl p-6 text-center border border-pink-400/30 space-y-3">
               <Trophy className="w-12 h-12 text-amber-400 mx-auto" />
               <h3 className="text-2xl font-bold text-white">
-                {scores.user > scores.opponent ? 'You won!' : scores.opponent > scores.user ? 'Opponent won!' : 'It\'s a tie!'}
+                {scores.user > scores.opponent ? 'You won!' : scores.opponent > scores.user ? `${opponentName} won!` : 'It\'s a tie!'}
               </h3>
               <p className="text-lg text-white/80">Final Score: {scores.user} - {scores.opponent}</p>
             </div>
